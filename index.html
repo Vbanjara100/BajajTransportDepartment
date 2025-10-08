@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bajaj Transport Department</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen font-sans text-gray-800 bg-[#f4f7fb]">
+  <div class="max-w-6xl mx-auto p-4">
+    <!-- Header -->
+    <header class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-md bg-blue-800 text-white flex items-center justify-center text-xl font-bold">B</div>
+        <div>
+          <h1 class="text-2xl font-semibold">BAJAJ AUTO TRANSPORT DEPARTMENT CHAKAN</h1>
+          <div class="text-sm text-gray-500">Shift management · Driver & Supervisor directory · Real-time updates</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <div id="userInfo" class="text-sm text-gray-600"></div>
+        <button id="loginBtn" class="px-4 py-2 bg-blue-700 text-white rounded-md">Admin Login</button>
+        <button id="logoutBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hidden">Logout</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- Sidebar / Shifts -->
+      <section class="col-span-1 md:col-span-1 bg-white p-4 rounded-lg shadow bg-gradient-to-b from-white to-[#fbfdff]">
+        <h2 class="font-semibold mb-3">Shifts</h2>
+        <div class="grid gap-2">
+          <button class="shiftBtn w-full text-left px-3 py-2 rounded hover:bg-blue-50" data-shift="sunday1">Sunday — 1st Shift</button>
+          <button class="shiftBtn w-full text-left px-3 py-2 rounded hover:bg-blue-50" data-shift="sunday2">Sunday — 2nd Shift</button>
+          <button class="shiftBtn w-full text-left px-3 py-2 rounded hover:bg-blue-50" data-shift="sunday3">Sunday — 3rd Shift</button>
+          <button class="shiftBtn w-full text-left px-3 py-2 rounded hover:bg-blue-50" data-shift="nextweek1">Next Week — 1st Shift</button>
+          <button class="shiftBtn w-full text-left px-3 py-2 rounded hover:bg-blue-50" data-shift="nextweek2">Next Week — 2nd Shift</button>
+          <button class="shiftBtn w-full text-left px-3 py-2 rounded hover:bg-blue-50" data-shift="ot">OT (Overtime)</button>
+          <button class="shiftBtn w-full text-left px-3 py-2 rounded hover:bg-blue-50" data-shift="vendor">Vendor Visit</button>
+        </div>
+
+        <hr class="my-4" />
+        <div class="text-sm text-gray-600">Admin actions</div>
+        <div class="flex gap-2 mt-2">
+          <button id="addEntryBtn" class="flex-1 px-3 py-2 bg-green-600 text-white rounded disabled:opacity-50" disabled>Add Entry</button>
+          <button id="bulkSampleBtn" class="px-3 py-2 bg-yellow-500 text-white rounded">Add 10 Sample</button>
+        </div>
+      </section>
+
+      <!-- Entries Table -->
+      <section class="col-span-1 md:col-span-3 bg-white p-4 rounded-lg shadow bg-gradient-to-b from-white to-[#fbfdff]">
+        <div class="flex items-center justify-between mb-4">
+          <h2 id="shiftTitle" class="text-xl font-semibold">Select a shift</h2>
+          <div class="flex items-center gap-2">
+            <label class="text-sm">Filter date:</label>
+            <input id="filterDate" type="date" class="px-2 py-1 border rounded" />
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm" id="entriesTable">
+            <thead class="text-left text-xs text-gray-600 border-b">
+              <tr>
+                <th class="p-2 w-12">Sr. No.</th>
+                <th class="p-2 w-36">Date</th>
+                <th class="p-2">Route Name</th>
+                <th class="p-2 w-96">Stops</th>
+                <th class="p-2 w-40">Driver</th>
+                <th class="p-2 w-32">Driver Call</th>
+                <th class="p-2 w-40">Supervisor</th>
+                <th class="p-2 w-32">Supervisor Call</th>
+                <th class="p-2 w-36">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="entriesBody" class="divide-y"></tbody>
+          </table>
+        </div>
+
+        <div id="noData" class="text-center text-gray-500 mt-6">No entries. Select a shift to load data.</div>
+      </section>
+    </main>
+
+    <footer class="mt-8 text-center text-xs text-gray-500">© Bajaj Transport Department — built with Firebase Realtime Database</footer>
+  </div>
+
+  <!-- Admin Modal -->
+  <div id="adminModal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center">
+    <div class="bg-white rounded-lg p-4 w-full max-w-xl">
+      <h3 class="font-semibold mb-2">Admin Login</h3>
+      <div id="authArea">
+        <label class="block text-sm">Email</label>
+        <input id="adminEmail" class="w-full border px-2 py-1 mb-2 rounded" placeholder="admin@example.com" />
+        <label class="block text-sm">Password</label>
+        <input id="adminPassword" type="password" class="w-full border px-2 py-1 mb-4 rounded" placeholder="password" />
+        <div class="flex justify-end gap-2">
+          <button id="closeAuth" class="px-3 py-2 bg-gray-200 rounded">Cancel</button>
+          <button id="doLogin" class="px-3 py-2 bg-blue-600 text-white rounded">Login</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Entry Modal -->
+  <div id="entryModal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center">
+    <div class="bg-white rounded-lg p-4 w-full max-w-2xl overflow-y-auto max-h-[85vh]">
+      <h3 id="entryModalTitle" class="font-semibold mb-2">Add Entry</h3>
+      <div class="grid grid-cols-1 gap-2">
+        <label>Sr. No.</label>
+        <input id="inputSrNo" class="w-full border px-2 py-1 rounded" type="number" />
+        <label>Date</label>
+        <input id="inputDate" class="w-full border px-2 py-1 rounded" type="date" />
+        <label>Route Name</label>
+        <input id="inputRoute" class="w-full border px-2 py-1 rounded" />
+        <label>Stops (Each on a new line)</label>
+        <textarea id="inputStops" rows="6" class="w-full border px-2 py-1 rounded"></textarea>
+        <div>
+          <label>Driver Name</label>
+          <input id="inputDriver" class="w-full border px-2 py-1 rounded" />
+          <label>Driver Phone (with country code)</label>
+          <input id="inputDriverPhone" class="w-full border px-2 py-1 rounded" placeholder="+91xxxxxxxxxx" />
+        </div>
+        <div>
+          <label>Supervisor Name</label>
+          <input id="inputSupervisor" class="w-full border px-2 py-1 rounded" />
+          <label>Supervisor Phone (with country code)</label>
+          <input id="inputSupervisorPhone" class="w-full border px-2 py-1 rounded" placeholder="+91xxxxxxxxxx" />
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 mt-3">
+        <button id="closeEntry" class="px-3 py-2 bg-gray-200 rounded">Cancel</button>
+        <button id="saveEntry" class="px-3 py-2 bg-green-600 text-white rounded">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase & App JS -->
+  <script type="module">
+    // ---------------- Replace this with your Firebase config ----------------
+    const firebaseConfig = {
+  apiKey: "AIzaSyAnaIdm2oB1xdeIGzvwSVZi20wn0sgd3Rg",
+  authDomain: "fineltransport-9385c.firebaseapp.com",
+  databaseURL: "https://fineltransport-9385c-default-rtdb.firebaseio.com",
+  projectId: "fineltransport-9385c",
+  storageBucket: "fineltransport-9385c.firebasestorage.app",
+  messagingSenderId: "273457213119",
+  appId: "1:273457213119:web:01a05ac8b032b9c4aa200a",
+  measurementId: "G-MN5Y77C56B"
+};
+
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js';
+    import { getDatabase, ref, onValue, push, set, update, remove } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js';
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js';
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    // ----------------- UI Elements -----------------
+    const shiftButtons = document.querySelectorAll('.shiftBtn');
+    const shiftTitle = document.getElementById('shiftTitle');
+    const entriesBody = document.getElementById('entriesBody');
+    const noData = document.getElementById('noData');
+    const addEntryBtn = document.getElementById('addEntryBtn');
+    const bulkSampleBtn = document.getElementById('bulkSampleBtn');
+    const adminModal = document.getElementById('adminModal');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userInfo = document.getElementById('userInfo');
+
+    let currentShift = null;
+    let currentEntries = {};
+    let editingEntryId = null;
+
+    // Entry modal fields
+    const entryModal = document.getElementById('entryModal');
+    const entryModalTitle = document.getElementById('entryModalTitle');
+    const inputSrNo = document.getElementById('inputSrNo');
+    const inputDate = document.getElementById('inputDate');
+    const inputRoute = document.getElementById('inputRoute');
+    const inputStops = document.getElementById('inputStops');
+    const inputDriver = document.getElementById('inputDriver');
+    const inputDriverPhone = document.getElementById('inputDriverPhone');
+    const inputSupervisor = document.getElementById('inputSupervisor');
+    const inputSupervisorPhone = document.getElementById('inputSupervisorPhone');
+    const saveEntry = document.getElementById('saveEntry');
+
+    // Auth modal
+    const doLogin = document.getElementById('doLogin');
+    const closeAuth = document.getElementById('closeAuth');
+    const adminEmail = document.getElementById('adminEmail');
+    const adminPassword = document.getElementById('adminPassword');
+
+    // Filter date
+    const filterDate = document.getElementById('filterDate');
+
+    // ----------------- Shift Keys -----------------
+    const SHIFT_KEYS = {
+      sunday1: 'Sunday1Shift',
+      sunday2: 'Sunday2Shift',
+      sunday3: 'Sunday3Shift',
+      nextweek1: 'NextWeek1Shift',
+      nextweek2: 'NextWeek2Shift',
+      ot: 'OT',
+      vendor: 'VendorVisit'
+    };
+
+    // ----------------- Helpers -----------------
+    function show(el){ el.classList.remove('hidden'); el.style.display='flex'; }
+    function hide(el){ el.classList.add('hidden'); el.style.display='none'; }
+    function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m])); }
+
+    // ----------------- Shift Selection -----------------
+    shiftButtons.forEach(btn => btn.addEventListener('click', () => {
+      const key = btn.dataset.shift;
+      selectShift(key);
+    }));
+
+    let activeRef = null;
+    function selectShift(key){
+      currentShift = SHIFT_KEYS[key] || key;
+      shiftTitle.textContent = document.querySelector(`[data-shift="${key}"]`).textContent + ' — Entries';
+      listenToShift(currentShift);
+      noData.textContent = 'Loading...';
+    }
+
+    function listenToShift(shiftKey){
+      if(activeRef && activeRef.off) activeRef.off();
+      const dbRef = ref(db, `shifts/${shiftKey}`);
+      activeRef = dbRef;
+      onValue(dbRef, snapshot => {
+        const val = snapshot.val() || {};
+        currentEntries = val.entries || {};
+        renderEntries(currentEntries);
+      }, err => { console.error('DB error', err); noData.textContent = 'Failed to load data.'; });
+    }
+
+    function renderEntries(entries){
+      entriesBody.innerHTML = '';
+      const items = Object.entries(entries || {}).sort((a,b)=> (a[1].srNo || 0) - (b[1].srNo || 0));
+      if(items.length === 0){ noData.classList.remove('hidden'); noData.textContent='No entries for this shift.'; return; }
+      noData.classList.add('hidden');
+
+      const selectedFilter = filterDate.value || null;
+
+      items.forEach(([id, entry])=>{
+        if(selectedFilter && entry.date !== selectedFilter) return;
+        const tr = document.createElement('tr');
+        tr.className='align-top';
+        tr.innerHTML = `
+          <td class="p-2 align-top">${entry.srNo ?? ''}</td>
+          <td class="p-2 align-top">${entry.date ?? ''}</td>
+          <td class="p-2 align-top">${escapeHtml(entry.routeName ?? '')}</td>
+          <td class="p-2 align-top text-xs whitespace-pre-wrap">${escapeHtml(Array.isArray(entry.stops)?entry.stops.join('\n'):'')}</td>
+          <td class="p-2 align-top">${escapeHtml(entry.driverName ?? '')}</td>
+          <td class="p-2 align-top"><a href="tel:${escapeHtml(entry.driverPhone??'')}" class="text-blue-600 underline">${escapeHtml(entry.driverPhone??'')}</a></td>
+          <td class="p-2 align-top">${escapeHtml(entry.supervisorName ?? '')}</td>
+          <td class="p-2 align-top"><a href="tel:${escapeHtml(entry.supervisorPhone??'')}" class="text-blue-600 underline">${escapeHtml(entry.supervisorPhone??'')}</a></td>
+          <td class="p-2 align-top">
+            <button data-id="${id}" class="editBtn px-2 py-1 text-white bg-green-600 rounded text-xs">Edit</button>
+            <button data-id="${id}" class="deleteBtn px-2 py-1 text-white bg-red-600 rounded text-xs">Delete</button>
+          </td>
+        `;
+        entriesBody.appendChild(tr);
+      });
+
+      // Attach Edit/Delete
+      document.querySelectorAll('.editBtn').forEach(btn=>{
+        btn.onclick = ()=> editEntry(btn.dataset.id);
+      });
+      document.querySelectorAll('.deleteBtn').forEach(btn=>{
+        btn.onclick = ()=> deleteEntry(btn.dataset.id);
+      });
+    }
+
+    filterDate.addEventListener('change', ()=> renderEntries(currentEntries));
+
+    // ----------------- Entry CRUD -----------------
+    addEntryBtn.addEventListener('click', ()=> openEntryModal());
+    bulkSampleBtn.addEventListener('click', addBulkSample);
+
+    function openEntryModal(entry=null){
+      editingEntryId = entry?.id || null;
+      entryModalTitle.textContent = editingEntryId ? 'Edit Entry' : 'Add Entry';
+      inputSrNo.value = entry?.srNo ?? '';
+      inputDate.value = entry?.date ?? '';
+      inputRoute.value = entry?.routeName ?? '';
+      inputStops.value = entry?.stops?.join('\n') ?? '';
+      inputDriver.value = entry?.driverName ?? '';
+      inputDriverPhone.value = entry?.driverPhone ?? '';
+      inputSupervisor.value = entry?.supervisorName ?? '';
+      inputSupervisorPhone.value = entry?.supervisorPhone ?? '';
+      show(entryModal);
+    }
+
+    document.getElementById('closeEntry').addEventListener('click', ()=> hide(entryModal));
+
+    saveEntry.addEventListener('click', ()=>{
+      if(!currentShift){ alert('Select a shift first'); return; }
+      const data = {
+        srNo: parseInt(inputSrNo.value) || 0,
+        date: inputDate.value,
+        routeName: inputRoute.value,
+        stops: inputStops.value.split('\n').filter(s=>s.trim()!==''),
+        driverName: inputDriver.value,
+        driverPhone: inputDriverPhone.value,
+        supervisorName: inputSupervisor.value,
+        supervisorPhone: inputSupervisorPhone.value
+      };
+      const dbRef = ref(db, `shifts/${currentShift}/entries`);
+      if(editingEntryId){
+        update(ref(db, `shifts/${currentShift}/entries/${editingEntryId}`), data);
+      } else {
+        const newRef = push(dbRef);
+        set(newRef, data);
+      }
+      hide(entryModal);
+    });
+
+    function editEntry(id){
+      const entry = currentEntries[id];
+      if(entry) openEntryModal({...entry, id});
+    }
+
+    function deleteEntry(id){
+      if(confirm('Are you sure you want to delete this entry?')){
+        remove(ref(db, `shifts/${currentShift}/entries/${id}`));
+      }
+    }
+
+    function addBulkSample(){
+      if(!currentShift){ alert('Select a shift first'); return; }
+      const dbRef = ref(db, `shifts/${currentShift}/entries`);
+      for(let i=1;i<=10;i++){
+        const newRef = push(dbRef);
+        set(newRef, {
+          srNo: i,
+          date: new Date().toISOString().split('T')[0],
+          routeName: `Route ${i}`,
+          stops: ['Stop1','Stop2','Stop3'],
+          driverName: `Driver ${i}`,
+          driverPhone: '+91xxxxxxxxxx',
+          supervisorName: `Supervisor ${i}`,
+          supervisorPhone: '+91xxxxxxxxxx'
+        });
+      }
+    }
+
+    // ----------------- Admin Auth -----------------
+    loginBtn.addEventListener('click', ()=> show(adminModal));
+    closeAuth.addEventListener('click', ()=> hide(adminModal));
+
+    doLogin.addEventListener('click', ()=>{
+      signInWithEmailAndPassword(auth, adminEmail.value, adminPassword.value)
+      .then(res=> hide(adminModal))
+      .catch(err=> alert('Login failed: '+err.message));
+    });
+
+    logoutBtn.addEventListener('click', ()=>{
+      signOut(auth);
+    });
+
+    onAuthStateChanged(auth, user=>{
+      if(user){
+        userInfo.textContent = user.email;
+        hide(loginBtn); show(logoutBtn);
+        addEntryBtn.disabled = false;
+      } else {
+        userInfo.textContent = '';
+        show(loginBtn); hide(logoutBtn);
+        addEntryBtn.disabled = true;
+      }
+    });
+  </script>
+</body>
+</html>
